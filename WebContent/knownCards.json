@@ -1,0 +1,12 @@
+
+{ "data" : { "NAT-MCH-MCMC"  : "img/nat/mch.jpg",
+			 "NAT-PM-DC"     : "img/nat/pm.jpg",
+			 "NAT-PM-DC780"  : "img/nat/pm.jpg",
+			 "NAT-PM-DC840"  : "img/nat/pm.jpg",
+			 "VT UTC010"     : "img/vadatech/pm.jpg",
+			 "BU AMC13"      : "img/cms/amc13xg.jpg",
+			 "uHTR"          : "img/cms/uHTR.jpg",
+			 "CERN AMC-GLIB" : "img/cern/GLIB.png",
+			 "VT UTC010"     : "img/vadatech/pm.jpg" },
+  "request" : "knownCards"
+}

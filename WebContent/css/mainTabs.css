@@ -1,0 +1,206 @@
+.mainTabs {
+	position: relative;/* position: relative prevents IE scroll bug (element with position: relative inside container with overflow: auto appear as "fixed") */
+	padding: 0;
+	border-radius: 0;
+	border: 0;
+}
+
+.mainTabs .ui-widget-header {
+	border: 0;
+	border-radius: 0;
+	background: #dddddd url(overcast/images/ui-bg_glass_35_dddddd_1x400.png) 50% 50% repeat-x;
+	color: #444444;
+	font-weight: bold;
+}
+
+.mainTabs .ui-tabs-nav {
+	margin: 0;
+	padding: 2px 0 0 10px;
+	position: fixed;
+	width: 100%;
+	z-index: 1000;
+	border-color: #c7c7c7;
+    border-style: solid;
+    border-width: 0 0 5px;
+}
+
+.mainTabs .ui-state-default {
+	border: 1px solid #cccccc;
+	background: #eeeeee url(smoothness/images/ui-bg_glass_60_eeeeee_1x400.png) 50% 50% repeat-x;
+	font-weight: bold;
+	color: #3383bb;
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px;
+    margin-bottom: 1px !important;
+}
+
+.mainTabs .ui-state-default a {
+	color: #999;
+}
+
+.mainTabs .ui-state-hover,
+.mainTabs .ui-state-focus {
+	border: 1px solid #bbbbbb;
+	background: #f8f8f8 url(overcast/images/ui-bg_glass_100_f8f8f8_1x400.png) 50% 50% repeat-x;
+	font-weight: bold;
+	color: #599fcf;
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px;
+}
+
+.mainTabs .ui-state-active {
+	border: 1px solid #999999;
+	background: #999999 url(overcast/images/ui-bg_inset-hard_75_999999_1x100.png) 50% 50% repeat-x;
+	font-weight: bold;
+	color: #ffffff;
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px;
+    padding-bottom: 2px;
+    margin-bottom: 0px !important;
+}
+
+.mainTabs .ui-state-active a {
+	color: black;
+}
+
+.mainTabs .ui-widget-content {
+	padding-top: 50px;
+	border: 0;
+	background: #c9c9c9 url(overcast/images/ui-bg_inset-soft_50_c9c9c9_1x100.png) 50% bottom repeat-x;
+	color: #333333;
+}
+
+/*
+.ui-tabs-container {
+	margin: 0px auto;
+	position: relative;
+	top: -1px;
+}
+
+
+@media all and (min-width: 300px) {
+
+  .ui-tabs-bar li { 
+	color: grey;
+  }
+}
+
+@media all and (min-width: 600px) {
+  .ui-tabs-container {
+	margin: 0px auto;
+	position: relative;
+	top: -1px;
+	border: 1px solid #2647A0;
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+  }
+  
+  .ui-tabs-bar li { 
+	color: lightgrey;
+  }
+  
+  .ui-tabs-bar li:hover { 
+	color: grey;
+  }
+  
+}
+
+.ui-tabs-container .ui-tabs-panel {
+	display: none;
+}
+
+.ui-tabs-container .ui-tabs-panel-active {
+	display: block;
+}
+
+.ui-tabs-bar { 
+	margin: 0px auto;
+	border-color: #2647A0;
+    border-style: solid;
+    border-width: 0 0 3px;
+	height: 40px;
+	width: 300px;
+}
+
+.ui-tabs-bar ul {
+	padding: .5em .5em 0;
+	margin: 0px;
+	position: absolute;
+	bottom: 3px;
+}
+
+.ui-tabs-bar li { 
+	margin: 0 .2em 1px 0; 
+	position: relative; 
+	bottom: 3px; 
+	list-style: none; 
+	padding: 4px 0.5em 1px 0.5em; 
+	white-space: nowrap;
+	display: inline;
+	border: 1px solid #AAAAAA;
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+	border-bottom: 0 !important;
+	cursor: pointer;
+	text-shadow: none;
+	text-decoration: none;
+}
+
+.ui-tabs-bar li.ui-tabs-selected, .ui-tabs-bar li.ui-tabs-transition { 
+	bottom: 3px; 
+	padding-top: 7px;
+	padding-bottom: 5px;
+	background: #2647A0;
+	cursor: text;
+	color: white;
+	border: none;
+}
+
+
+.ui-page-header-fixed {
+	min-height: 100px;
+}
+
+.ui-page-header-fixed .ui-content {
+	padding-top: 0px;
+}
+
+
+
+
+.ui-tabs .ui-tabs-nav li {
+	list-style: none;
+	float: left;
+	position: relative;
+	top: 0;
+	margin: 1px .2em 0 0;
+	border-bottom-width: 0;
+	padding: 0;
+	white-space: nowrap;
+}
+.ui-tabs .ui-tabs-nav li a {
+	float: left;
+	padding: .5em 1em;
+	text-decoration: none;
+}
+.ui-tabs .ui-tabs-nav li.ui-tabs-active {
+	margin-bottom: -1px;
+	padding-bottom: 1px;
+}
+.ui-tabs .ui-tabs-nav li.ui-tabs-active a,
+.ui-tabs .ui-tabs-nav li.ui-state-disabled a,
+.ui-tabs .ui-tabs-nav li.ui-tabs-loading a {
+	cursor: text;
+}
+.ui-tabs .ui-tabs-nav li a,
+
+.ui-tabs-collapsible .ui-tabs-nav li.ui-tabs-active a {
+	cursor: pointer;
+}
+.ui-tabs .ui-tabs-panel {
+	display: block;
+	border-width: 0;
+	padding: 1em 1.4em;
+	background: none;
+}
+*/

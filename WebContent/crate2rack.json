@@ -1,0 +1,6 @@
+
+{ "data" : { "upper crate"  : { "rack" : "rack 1", "pos" : 16 },
+			 "lower crate"  : { "rack" : "rack 1", "pos" :  8 }
+		   },
+  "request" : "crate2rack"
+}

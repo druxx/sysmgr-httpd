@@ -1,0 +1,136 @@
+{
+    "data":
+    [
+        {
+            "fru": "3",
+            "mstate": "255",
+            "name": "NAT-MCH-MCMC",
+            "type": "MCH",
+            "slot": "1"
+        },
+		{
+			"fru": "30",
+			"mstate": "0",
+			"name": "AMC13",
+			"type": "MCH",
+			"slot": "2"
+		},
+         {
+            "fru": "5",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "1"
+        },
+        {
+            "fru": "6",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "2"
+        },
+        {
+            "fru": "7",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "3"
+        },
+        {
+            "fru": "8",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "4"
+        },
+        {
+            "fru": "9",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "5"
+        },
+        {
+            "fru": "10",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "6"
+        },
+        {
+            "fru": "11",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "7"
+        },
+        {
+            "fru": "12",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "8"
+        },
+        {
+            "fru": "13",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "9"
+        },
+        {
+            "fru": "14",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "10"
+        },
+        {
+            "fru": "15",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "11"
+        },
+        {
+            "fru": "16",
+            "mstate": "0",
+            "name": "CERN AMC-GLIB",
+            "type": "AMC",
+            "slot": "12"
+        },
+        {
+            "fru": "40",
+            "mstate": "0",
+            "name": "VT VT095",
+            "type": "CU",
+            "slot": "1"
+        },
+        {
+            "fru": "41",
+            "mstate": "0",
+            "name": "VT VT095",
+            "type": "CU",
+            "slot": "2"
+        },
+        {
+            "fru": "50",
+            "mstate": "0",
+            "name": "VT UTC010",
+            "type": "PM",
+            "slot": "1"
+        },
+        {
+            "fru": "51",
+            "mstate": "0",
+            "name": "VT UTC010",
+            "type": "PM",
+            "slot": "2"
+        }
+    ],
+    "request":
+    {
+        "cmd": "LIST_CARDS",
+        "crate": "3"
+    }
+}

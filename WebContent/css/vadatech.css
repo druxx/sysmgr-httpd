@@ -1,0 +1,294 @@
+@CHARSET "UTF-8";
+
+.overlay {
+	position: absolute;
+	background-color: rgba( 0, 0, 0, 0 );
+	z-index: 10;
+}
+
+.allParent {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.halfHeight {
+	height: 700px;
+}
+
+.infoDiv {
+	overflow: auto;
+	background-color: #e0e0e0;
+	width: 624px;
+	height: 490px;
+	left: 650px;
+}
+
+.vadatech {
+ 	position: 'absolute'; 
+}	
+
+.vadatech .crate {
+	width: 624px; 
+	height: 490px;
+	position: 'absolute'; 
+	left: 0; 
+	z-index: 1;
+}
+
+.vadatech .block {
+    position: absolute; 
+    z-index: 2;
+	border-top: 5px solid rgba( 0,0,0,0.6);
+    background-color: #e0e0e0;
+}
+
+.vadatech .image {
+    position: absolute; 
+    z-index: 2;
+	padding-top: 5px;
+}
+
+.vadatech .selected {
+	background-color: rgba( 90%, 90%, 50%, 0.3 );
+	border-top: 5px solid rgba( 90%, 90%, 0%, 0.7 );
+	border-bottom: 5px solid rgba( 90%, 90%, 0%, 0.7 );
+}
+
+
+.vadatech .overlay:hover {
+	background-color: rgba( 90%, 90%, 20%, 0.4 );
+	cursor: pointer;
+	border-top: 5px solid lightyellow;
+}
+
+.vadatech .MCH {
+	left:   312px;
+	height: 120px; 
+	width:   37px; 
+}
+
+.vadatech .MCH1 {
+    top: 244px; 
+}
+
+.vadatech .MCH2 {
+	top: 130px;
+	height: 112px; 
+}
+
+.vadatech .PM {
+	left:    37px;
+	height: 115px; 
+    width:   37px; 
+}
+
+.vadatech .PM1 {
+    top: 248px; 
+}
+
+.vadatech .PM2 {
+	top: 132px;
+}
+
+.vadatech .CU {
+	left:   37px;
+	width: 550px;
+	height: 40px;
+	opacity: 0.1;
+}
+
+.vadatech .CU:hover {
+	opacity: 0.9;
+}
+
+.vadatech .CU.selected {
+	opacity: 0.6;
+}
+
+.vadatech .CU1 {
+	top: 70px;
+}
+
+.vadatech .CU2 {
+	top: 385px;
+}
+
+.vadatech .AMC {
+	top:    132px;
+	height: 232px;
+    width:   37px; 
+}
+
+
+
+.vadatech .AMC1 {
+	left: 76px;
+}
+
+.vadatech .AMC2 {
+	left: 115px;
+}
+
+.vadatech .AMC3 {
+	left: 155px;
+}
+
+.vadatech .AMC4 {
+	left: 194px;
+}
+
+.vadatech .AMC5 {
+	left: 233px;
+}
+
+.vadatech .AMC6 {
+	left: 272px;
+}
+
+.vadatech .AMC7 {
+	left: 354px;
+}
+
+.vadatech .AMC8 {
+	left: 393px;
+}
+
+.vadatech .AMC9 {
+	left: 431px;
+}
+
+.vadatech .AMC10 {
+	left: 470px;
+}
+
+.vadatech .AMC11 {
+	left: 509px;
+}
+
+.vadatech .AMC12 {
+	left: 548px;
+}
+
+.rack {
+	background-color: #e0e0e0;
+	position: absolute; 
+	width: 550px;
+	margin-top:  20px;
+	margin-left: 10px;
+	border-width: 10px 10px 0 10px;
+	border-style: solid;
+	border-color: #606060;
+}
+
+.rack .infoDiv {
+	height: 420px;
+	left: 565px;
+}	
+
+.rack .vadatech .crate {
+	width: 550px; 
+	height: 420px;
+}
+
+.rack .vadatech .MCH {
+	left:   276px;
+	height: 103px; 
+	width:   37px; 
+}	
+
+.rack .vadatech .MCH1 {
+    top: 208px; 
+}
+
+.rack .vadatech .MCH2 {
+	top: 110px;
+	height: 96px; 
+}
+
+.rack .vadatech .PM {
+	left:    33px;
+	height: 102px; 
+    width:   37px; 
+}
+
+.rack .vadatech .PM1 {
+    top: 209px; 
+}
+
+.rack .vadatech .PM2 {
+	top: 106px;
+}
+
+.rack .vadatech .CU {
+	left:   32px;
+	width: 487px;
+	height: 38px;
+}
+
+.rack .vadatech .CU1 {
+	top: 56px;
+}
+
+.rack .vadatech .CU2 {
+	top: 326px;
+}
+
+.rack .vadatech .AMC {
+	top:    106px;
+	height: 206px;
+    width:   33px; 
+}
+
+.rack .vadatech .AMC1 {
+	left: 72px;
+}
+
+.rack .vadatech .AMC2 {
+	left: 106px;
+}
+
+.rack .vadatech .AMC3 {
+	left: 140px;
+}
+
+.rack .vadatech .AMC4 {
+	left: 175px;
+}
+
+.rack .vadatech .AMC5 {
+	left: 210px;
+}
+
+.rack .vadatech .AMC6 {
+	left: 244px;
+}
+
+.rack .vadatech .AMC7 {
+	left: 314px;
+}
+
+.rack .vadatech .AMC8 {
+	left: 348px;
+}
+
+.rack .vadatech .AMC9 {
+	left: 382px;
+}
+
+.rack .vadatech .AMC10 {
+	left: 416px;
+}
+
+.rack .vadatech .AMC11 {
+	left: 450px;
+}
+
+.rack .vadatech .AMC12 {
+	left: 484px;
+}
+
+
+

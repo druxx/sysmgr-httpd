@@ -1,0 +1,637 @@
+<!doctype html> 
+<html> 
+<head> 
+<meta charset="utf-8">
+<title>DESY Crate Management</title>
+<link rel="shortcut icon" href="http://cms.web.cern.ch/sites/cms.web.cern.ch/files/CMS_Logo_60x60.gif" type="image/gif" />
+<link rel="stylesheet" type="text/css" href="css/smoothness/jquery-ui-1.10.3.custom.min.css">
+<link rel="stylesheet" type="text/css" href="css/mainTabs.css">
+<link rel="stylesheet" type="text/css" href="css/tree.css">
+<link rel="stylesheet" type="text/css" href="css/vadatech.css">
+<script type="text/javascript" src="js/jquery-1.10.2.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.10.3.custom.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script>
+<script type="text/javascript" src="js/knockout-3.0.0.js"></script>
+<script type="text/javascript" src="js/knockout.mapping.js"></script>
+<script type="text/javascript" src="js/sysmgr.knockout.js"></script>
+<script type="text/javascript" src="js/jsonQ.js"></script>
+
+<script type="text/javascript" src="javascript/globalize.js"></script>
+<script type="text/javascript" src="javascript/dx.chartjs.js"></script>
+
+
+<style type="text/css">
+
+.sensor:hover {
+	cursor: pointer;
+}
+
+
+.circleBusy {
+	background-color: yellow !important;
+}
+
+.circle {
+	background-color: darkgrey;
+	border-radius: 50%;
+	width: 10px;
+	height: 10px; 
+	z-index: 10000;
+}
+
+.circleBrighter {
+	background-color: #808080;
+}
+
+
+.myTable th,td {
+	padding: 0 10px 0 10px;
+	font-weight: normal;
+}
+
+#jsonQdiv {
+	position: fixed;
+	top: 10px;
+	right: 15px;
+}
+
+</style>  
+
+<script type="text/javascript">
+
+var sysmgrModel = new SysmgrModel();
+var knownCards = {};
+var dummyCrate = "--dummy--";
+
+function initSysmgrModel()
+{
+	sysmgrModel.errors = ko.mapping.fromJS( [] ); //, {
+//	 	key: function(data) {
+//	      	return ko.utils.unwrapObservable(data.name);
+//	    }
+//	} );
+
+	sysmgrModel.eventsSince = ko.observable( (new Date()).getTime() / 1000 );
+	sysmgrModel.eventsSinceStr = ko.computed( function() {
+		return timeStr( sysmgrModel.eventsSince() * 1000 );
+	} );
+
+	sysmgrModel.crateClicked = function( clicked ) {
+		clicked.sensorGauge( 0 );
+		var cards = clicked.cards();
+		for ( var i = 0; i < cards.length; i++ )
+			cards[i].selected( false );
+		clicked.selectedSensors = {};
+		clicked.sensorTable.removeAll();
+		updateInfoTable( clicked.description(), [ "Crate Number = " + clicked.crateno(), "MCH = " + clicked.mch(), 
+		                                          "Status = " + (clicked.connected() ? "connected" : "<b>OFF</b>") ], clicked.crateno() );
+	};
+	
+	sysmgrModel.cardClicked = function( clicked ) {
+		var crate = sysmgrModel.getCrate( clicked.crate );
+		crate.sensorGauge( 0 ) ;
+		var cards = sysmgrModel.getCards( clicked.crate );
+		for ( var i = 0; i < cards.length; i++ )
+			cards[i].selected( false );
+		clicked.selected( true );
+		var sensors = clicked.sensors();
+		updateInfoTable( "CARD INFORMATION", [ "Slot = <b>" + clicked.slotstr + "</b>", "Card Name = <b>" + clicked.name() + "</b>", "FRU = " + clicked.fru(), "Card MState = " + clicked.mstate(),
+		                   "Number of Sensors = " + sensors.length ], clicked.crate );
+		var list = [];
+		var wait = sensors.length > 10 ? 1 : 0;
+		for ( var i = 0; i < sensors.length; i++ ) {
+			var sensor = sensors[i];
+			list.push( { name: sensor.name(), currentValue: sensor.currentValue, unit: sensor.unit, when: timeStr( sensor.when ), crate: clicked.crate, fru: clicked.fru(), id: sensor.id } );
+			if ( sensor.type != "E" )
+				jsonQ.queueRequest( { cmd: "READ_SENSOR", crate: clicked.crate, fru: clicked.fru(), sensor: sensor.name() }, updateCallback, wait );
+			if ( sensor.type == "T" && !sensor.thresholds )
+				jsonQ.queueRequest( { cmd: "GET_SENSOR_THRESHOLDS", crate: clicked.crate, fru: clicked.fru(), sensor: sensor.name() }, updateCallback, 2 );
+		}
+		ko.mapping.fromJS( list, {}, crate.sensorTable );
+		var sensorTable = crate.sensorTable();
+		crate.selectedSensors = {};
+		for ( var i = 0; i < sensorTable.length; i++ ) 
+			crate.selectedSensors[ sensorTable[i].id() ] = sensorTable[i];
+	};
+
+	sysmgrModel.sensorClicked = function( clicked ) {
+		var sensor = sysmgrModel.getSensor( { crate: clicked.crate(), fru: clicked.fru(), sensor: clicked.name() } );
+		var data = [ "FRU = " + sensor.fru, "Crate Number = " + sensor.crate, "Sensor Type = " + sensor.type ];
+		if( sensor.type == "T" )
+			data.push( "Sensor Units = " + sensor.longunits );
+		if ( sensor.thresholds ) {
+			data.push( "Thesholds" );
+			for ( var key in sensor.thresholds ) {
+				var s = key + ": " + sensor.thresholds[key];
+				if ( sensor.raw2value )
+					s += " = " + (sensor.thresholds[key] * sensor.raw2value).toPrecision(3) + sensor.unit;
+				data.push( s);
+			}
+		}
+		updateInfoTable( sensor.name(), data, clicked.crate() );	
+		var crate = sysmgrModel.getCrate( clicked.crate() );
+		crate.selectedSensors = {};
+		crate.sensorTable.removeAll();
+		crate.sensorGauge( sensor.id );
+		initGauge( $('#c' + clicked.crate() + 'gauge'), sensor );
+		jsonQ.queueRequest( { cmd: "READ_SENSOR", crate: clicked.crate(), fru: clicked.fru(), sensor: clicked.name() }, updateCallback, 2 );
+	};
+	
+}
+
+
+$(function() {
+	$('#tabs').css('visibility','hidden');
+	initSysmgrModel();
+	
+	jsonQ.setStatusDiv( $('#jsonQdiv') );
+	$.getJSON( "knownCards.json", function( reply ) {
+		knownCards = reply.data;
+		$.getJSON( "crate2rack.json", function( reply ) {
+			sysmgrModel.crate2rack = reply.data;
+			jsonQ.queueRequest( { cmd: 'LIST_CRATES' }, initCallback );
+		});
+	} );
+
+	$( document ).tooltip( { position: { my: "left+15 top-15", at: "right top" },
+		 items: ".overlay",
+		 content: function() {
+			 var id = this.id;
+			 var card = sysmgrModel.getCardById( id );
+		 	 return "<table><tr><td>slot:</td><td>" + card.slotstr + "</td></tr><tr><td>type:</td><td>" + card.name() + "</td></tr></table>";
+		 }
+	} );
+	
+	$('#getOldEvents').click( function() { 
+		jsonQ.queueRequest( { cmd: 'LIST_CRATES', session: "0" }, updateCallback );
+	} );
+});
+
+function initCallback( reply )
+{
+	jsonQ.setStatusDivDone();
+	if ( reply.request.cmd == "LIST_CRATES" ) {
+		if ( reply.error ) {
+			logError( { cmd: "LIST_CRATES", message: reply.message } );
+			jsonQ.queueRequest( { cmd: 'LIST_CRATES' }, initCallback, 10 );
+		} else {
+			var crates = reply.data;
+			sysmgrModel.initCratesRacks( crates );
+			ko.applyBindings( sysmgrModel );
+			$('#tabs').css('visibility','visible');
+		    $( "#tabs" ).tabs();
+			$(crates).each(function(indexCrate, crate) {
+				var crateI = crate.crateno;
+				updateInfoTable( crate.description, [ "Crate Number = " + crate.crateno, "MCH = " + crate.mch,"Status = " + (crate.connected ? "connected" : "<b>OFF</b>") ], crateI );
+				if ( crate.connected )
+					jsonQ.queueRequest( { cmd: "LIST_CARDS", crate: crateI }, initCallback );
+				else if ( crate.description === dummyCrate )
+					$.getJSON( "fullCrate.json", initCallback );
+			});
+		}
+	} else if ( reply.request.cmd == "LIST_CARDS" ) {
+		if ( reply.error ) {
+			logError( { cmd: "LIST_CARDS", message: reply.message } );
+			jsonQ.queueRequest( { cmd: 'LIST_CARDS', crate: reply.request.crate }, initCallback, 10 );
+		} else {
+			var cards = reply.data;
+			var crateI = Number( reply.request.crate );
+			sysmgrModel.getCrate( crateI ).updateCards( cards );
+			if ( sysmgrModel.getCrate( crateI ).connected() ) {
+				$(cards).each(function(indexCard, card) {
+					var fruI = card.fru;
+					jsonQ.queueRequest( { cmd: "LIST_SENSORS", crate: crateI, fru: fruI }, initCallback );
+				});
+			}
+		}
+	} else if ( reply.request.cmd == "LIST_SENSORS" )
+		processLIST_SENSORS( reply );
+
+	jsonQ.setDone();
+	if ( jsonQ.isIdle() ) {
+		var session = $.cookie( "session" );
+		if ( !session ) {
+			session = Math.round( ( new Date()).getTime() / 1000 );
+			$.cookie( 'session', session );
+		}
+		jsonQ.setSession( Number(session) );
+		jsonQ.queueRequest( { cmd: 'LIST_CRATES' }, updateCallback, 5 );
+	}
+}
+
+function updateCallback( reply )
+{
+	jsonQ.setStatusDivDone();
+	
+	if ( reply.request.cmd == "READ_SENSOR" )
+		processREAD_SENSOR( reply );
+	else if ( reply.request.cmd == "LIST_SENSORS" )
+		processLIST_SENSORS( reply );
+	else if ( reply.request.cmd == "LIST_CARDS" )
+		processLIST_CARDS( reply );
+	else if ( reply.request.cmd == "LIST_CRATES" )
+		processLIST_CRATES( reply );
+	else if ( reply.request.cmd == "GET_SENSOR_THRESHOLDS" )
+		processGET_SENSOR_THRESHOLDS( reply );
+	else
+		alert( "unknown command '" + reply.request.cmd + "''" );
+	if ( reply.events )
+		processEvents( reply );
+	
+	jsonQ.setDone();
+}
+
+
+function processLIST_CRATES( crateDATA )
+{
+	if (crateDATA.error) {
+		logError( { cmd: "LIST_CRATES", message: crateDATA.message } );
+		jsonQ.queueRequest( { cmd: 'LIST_CRATES' }, updateCallback, 30 );
+		return;
+	}
+	
+	var crates = crateDATA.data;
+	sysmgrModel.updateCrates( crates );
+
+	for ( var i = 0; i < crates.length; i++ ) {
+		var crate = crates[i];
+		if ( crate.connected ) {
+			var request = { cmd: "LIST_CARDS", crate: crate.crateno };
+			jsonQ.queueRequest( request, updateCallback, 10 );
+		} else if ( crate.description != dummyCrate )
+			sysmgrModel.getCrate( crate.crateno ).cards.removeAll()
+	}
+		
+	jsonQ.queueRequest( { cmd: 'LIST_CRATES' }, updateCallback, 30 );
+}
+
+
+function processLIST_CARDS( cardDATA )
+{
+	var crateI = Number( cardDATA.request.crate );
+	var request = { cmd: 'LIST_CARDS', crate: crateI };
+	
+	if ( cardDATA.error ) {
+		if ( !sysmgrModel.getCrate( crateI ).connected() )
+			return;
+		logError( { cmd: "LIST_CARDS", message: cardDATA.message } );
+		jsonQ.queueRequest( request, updateCallback, 10 );
+		return;
+	}
+
+	var cards = cardDATA.data;
+	var crate = sysmgrModel.getCrate( crateI );
+	crate.updateCards( cards );
+	cards = crate.cards();
+	for ( var i = 0; i < cards.length; i++ ) {
+		var card = cards[i];
+		if ( card.sensors().length == 0 )
+			jsonQ.queueRequest( { cmd: "LIST_SENSORS", crate: card.crate, fru: card.fru() }, updateCallback );
+	}
+	jsonQ.queueRequest( request, updateCallback, 10 );
+}
+
+function processLIST_SENSORS( sensorDATA )
+{
+	var crateI = Number( sensorDATA.request.crate );
+	var fruI = Number( sensorDATA.request.fru );
+	var request = { cmd: 'LIST_SENSORS', crate: crateI, fru: fruI };
+	
+	if ( sensorDATA.error ) {
+		logError( { cmd: "LIST_SENSORS", message: sensorDATA.message } );
+		jsonQ.queueRequest( request, updateCallback, 10 );
+		return;
+	}
+
+	var sensors = sensorDATA.data;
+	sysmgrModel.getCrate( crateI ).getCard( fruI ).updateSensors( sensors );
+}
+
+function processREAD_SENSOR( sensorDATA )
+{
+	var crateI = Number( sensorDATA.request.crate );
+	var fruI = Number( sensorDATA.request.fru );
+	var sensorName = sensorDATA.request.sensor;
+	
+	var data = sensorDATA.data;
+	var sensor = sysmgrModel.getSensor( { crate: crateI, fru: fruI, sensor: sensorName } );
+	sensor.when = (new Date()).getTime();
+
+	var wait = -1;
+
+	var old = sensor.currentValue;
+	var next = old;
+	if ( sensorDATA.error ) {
+		var x = ko.toJS( sensor ); 	// for debugging
+		logError( { cmd: "READ_SENSOR", message: sensorDATA.message } );
+		sensor.unit = "ERROR";		
+	} else if ( data.type == "Threshold" ) {
+		next = data.value;
+		sensor.unit = data.shortunits;		
+		sensor.raw2value = data.value / data.raw;
+		sensor.raw = data.raw;
+	}
+	else {
+		next = data.raw;
+		sensor.unit = data.type;		
+		sensor.raw = data.raw;
+	}
+	if ( next != old )
+		sensor.currentValue = next;
+
+	var crate = sysmgrModel.getCrate( crateI );
+	var inTable = crate.selectedSensors[ sensor.id ];
+	if ( inTable ) {
+		inTable.currentValue( sensor.currentValue );
+		inTable.unit( sensor.unit );
+		inTable.when( timeStr( sensor.when ) );
+		wait = 10;
+		if ( sensor.unit === "ERROR" )
+			wait = -1;	// don't read again
+	}
+	
+	if ( crate.sensorGauge() == sensor.id ) {
+		updateGauge( crate, sensor );
+		wait = 2;
+	}
+
+	if ( wait > 0 )
+		jsonQ.queueRequest( { cmd: 'READ_SENSOR', crate: crateI, fru: fruI, sensor: sensorName }, updateCallback, wait );
+}
+
+	
+function processGET_SENSOR_THRESHOLDS( reply )
+{
+	var crateI = Number( reply.request.crate );
+	var fruI = Number( reply.request.fru );
+	var sensorName = reply.request.sensor;
+	
+	if ( reply.error ) {
+//		logError( { cmd: reply.request.cmd, message: reply.message } );
+		return;
+	}	
+	
+	var sensor = sysmgrModel.getSensor( { crate: crateI, fru: fruI, sensor: sensorName } );
+	if ( sensor && typeof reply.data === 'object' )
+		sensor.thresholds = reply.data;	
+}
+
+
+
+function processEvents( reply ) {
+	var start = reply.events.from;
+	if ( start && start < sysmgrModel.eventsSince() )
+		sysmgrModel.eventsSince( start );
+	for ( var i = 0; i < reply.events.list.length; i++ )
+		sysmgrModel.events.push( reply.events.list[i] );
+}
+
+
+function updateGauge( crate, sensor )
+{
+	var container = $( "#c" + crate.crateno() + "gauge > div" );
+	if ( !container )
+		return;
+
+	var value = sensor.currentValue;
+	if ( value != crate.previousSensorValue ) {
+		crate.previousSensorValue = value;
+		if ( sensor.shortunits == "V" || sensor.shortunits == "A" ) {
+			container.dxCircularGauge( {
+					needles: [{ value: value, color: 'blue', offset: 10}],
+					markers: [{ value: value, color: 'blue', offset: -5}]
+			});
+		} else if ( sensor.shortunits =="C" ) {
+			container.dxLinearGauge( {
+				needles: [{ value: value, color: 'blue', offset: 10}],
+				markers: [{ value: value, color: 'blue', offset: -5}],
+		        rangeBars: [{ value: value }]
+			});
+		}
+	}
+}
+
+
+
+function updateInfoTable( header, data, crate )
+{
+	var dest = sysmgrModel;
+	if ( crate )
+		dest = sysmgrModel.getCrate( crate );
+	
+	dest.infoTableHeader( header );
+	ko.mapping.fromJS( data, dest.infoTable );
+}
+
+var Month = new Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
+                      
+function timeStr( timeInMs ) 
+{
+	if ( timeInMs < 0 )	
+		return "";
+
+	var when = timeInMs ? new Date( timeInMs ) : new Date();
+	var h = when.getHours();
+	if ( isNaN( h ) )
+		return "";
+	var m = when.getMinutes();
+	var s = when.getSeconds();
+	var t = "" + h + ":" + Math.floor( m  / 10 ) + ( m % 10 ) + ":" + Math.floor( s / 10 ) + ( s % 10 );
+	
+	var now = new Date();
+	if ( now.getTime() - when.getTime() > 18 * 60 * 60 * 1000 )
+		t += " " + when.getDate() + "-" + Month[ when.getMonth() ];
+	
+	return t;
+}
+
+function logError( error )
+{
+	if ( sysmgrModel.errors().length == 0 )
+		addErrorTab();
+
+	var log = { cmd: "?", message: "no message" };
+	if ( error.cmd )
+		log.cmd = error.cmd;
+	if ( error.message )
+		log.message = error.message;
+	log.when = timeStr();
+	sysmgrModel.errors.unshift( log );
+}
+
+
+function addErrorTab()
+{
+	var li = $( "<li><a href='#errorsDiv'>errors</a></li>" );
+	$('#tabs').find( ".ui-tabs-nav" ).append( li );
+	$('#tabs').tabs( "refresh" );
+}
+
+function initGauge( gaugeDiv, sensor )
+{
+	gaugeDiv.empty();
+	var type = "linear";
+	var threshold = {lnc: -9999, lc: -9999, lnr: -9999, unc: -9999, uc: -9999, unr: -9999};
+	if ( sensor.thresholds && sensor.raw2value ) {
+		for ( var key in sensor.thresholds )
+			threshold[key] = sensor.thresholds[key] * sensor.raw2value;
+	}
+		
+
+	if( sensor.shortunits == "V") {
+		type = "circular";
+		if(threshold.lnc == -9999) threshold.lnc = 0;
+		if(threshold.lc == -9999) threshold.lc = -5;
+		if(threshold.lnr == -9999) threshold.lnr = -10;
+		if(threshold.unc == -9999) threshold.unc = 15;
+		if(threshold.uc == -9999) threshold.uc = 17;
+		if(threshold.unr == -9999) threshold.unr = 20;
+	} else if( sensor.shortunits == "A" ) {
+		type = "circular";
+		if(threshold.lnc == -9999) threshold.lnc = 0;
+		if(threshold.lc == -9999) threshold.lc = -0.5;
+		if(threshold.lnr == -9999) threshold.lnr = -1.0;
+		if(threshold.unc == -9999) threshold.unc = 1.5;
+		if(threshold.uc == -9999) threshold.uc = 1.7;
+		if(threshold.unr == -9999) threshold.unr = 2.0;
+	} else if( sensor.shortunits == "C") {
+		if(threshold.lnc == -9999) threshold.lnc = 10;
+		if(threshold.lc == -9999) threshold.lc = 5;
+		if(threshold.lnr == -9999) threshold.lnr = 0;
+		if(threshold.unc == -9999) threshold.unc = 40;
+		if(threshold.uc == -9999) threshold.uc = 45;
+		if(threshold.unr == -9999) threshold.unr = 50;
+	}
+	
+	var value = sensor.currentValue;
+	if ( type == "circular" ) {	
+		$('<div/>').css( { 'width': '200pt', 'height': '300px' } ).appendTo( gaugeDiv ).dxCircularGauge( {
+			scale: { startValue: threshold.lnr - 2, endValue: threshold.unr + 2,
+				majorTick: { color: 'black' },
+				minorTick: { color: 'black', visible: true, tickInterval: 1 }
+			},
+			needles: [{ value: value, color: 'blue', offset: 10}],
+			markers: [{ value: value, color: 'blue', offset: -5}],
+			spindle: {color : 'blue'},
+			rangeContainer: {
+				offset: -5,
+				backgroundColor: "none",
+				ranges: [
+					{ startValue: threshold.lnr - 2, endValue: threshold.lnr, color: 'black' }, 
+					{ startValue: threshold.lnr,     endValue: threshold.lc, color: 'red' }, 
+					{ startValue: threshold.lc,      endValue: threshold.lnc, color: 'yellow' }, 
+					{ startValue: threshold.lnc,     endValue: threshold.unc, color: 'green' }, 
+					{ startValue: threshold.unc,     endValue: threshold.uc, color: 'yellow' }, 
+					{ startValue: threshold.uc,      endValue: threshold.unr, color: 'red' }, 
+					{ startValue: threshold.unr,     endValue: threshold.unr+2, color: 'black' }
+				]
+			}
+		});
+	} else if (type == "linear") {
+		$('<div/>').css( { 'width': '200pt', 'height': '300px' } ).appendTo( gaugeDiv ).dxLinearGauge( {
+				geometry: { orientation: 'vertical' },
+				scale: {
+					startValue: threshold.lnr-2,
+					endValue: threshold.unr+2,
+					majorTick: { color: 'black' },
+				 	minorTick: { visible: true, tickInterval: 1, color: 'black' }
+				},
+				needles: [{ value: value, color: 'blue', offset: 10}],
+				markers: [{ value: value, color: 'blue', offset: -5}],
+				rangeBars: [{value: value }],
+				rangeContainer: {
+					offset: -5,
+					backgroundColor: "none",
+					ranges: [ 
+					 	{ startValue: threshold.lnr-2, endValue: threshold.lnr,   color: 'black' }, 
+						{ startValue: threshold.lnr,   endValue: threshold.lc,    color: 'red' }, 
+						{ startValue: threshold.lc,    endValue: threshold.lnc,   color: 'yellow' }, 
+						{ startValue: threshold.lnc,   endValue: threshold.unc,   color: 'green' }, 
+						{ startValue: threshold.unc,   endValue: threshold.uc,    color: 'yellow' }, 
+						{ startValue: threshold.uc,    endValue: threshold.unr,   color: 'red' }, 
+						{ startValue: threshold.unr,   endValue: threshold.unr+2, color: 'black' }
+					]
+				}
+			});
+	}
+}
+
+	
+</script>
+  
+</head>
+
+<body>
+<div id='jsonQdiv' class='circle'"></div>
+<div id=tabs class="mainTabs">
+ <ul>
+  <!-- ko foreach: racks -->
+        <li><a href="x" data-bind="attr: { href: '#tab' + i }, text: name"></a></li>
+    <!-- /ko -->
+  <li><a href="#eventLog">Event Log</a></li>
+ </ul>
+ <!-- ko foreach: racks -->
+   <div data-bind="attr: { id: 'tab' + i }">
+     <div data-bind="style: { height: ( crates().length > 1 ? '' + (60 * height + 80) + 'px' : '700px' ) }">
+      <div data-bind="foreach: crates, css: { rack: crates().length > 1 }, style: { height: '' + (60 * height) + 'px' }">
+       <div data-bind="attr: { id: 'crate' + crateno() }, style: { position: 'absolute', bottom: (pos() * 60)+'px' }, click: $root.crateClicked" class='vadatech crate'>
+	     <img src="img/vadatech/crate.jpg" class='crate'>
+		 <div data-bind='foreach: cards' class='allParent'>
+			<div data-bind="if: img"><img data-bind="css: cssClasses, attr: { src: img }" class='image'></div>
+			<div data-bind="ifnot: img"><div data-bind="css: cssClasses, text: name" class='block'></div></div>
+			<div class='overlay' data-bind="css: cssClasses + (selected() ? ' selected' : ''), attr: { id: id() }, click: $root.cardClicked, clickBubble: false"></div>
+		 </div>
+       </div>
+       <div data-bind="style: { position: 'absolute', bottom: (pos() * 60 + 3)+'px' }" class='infoDiv'>
+         <table>
+          <thead><tr><th data-bind="text: infoTableHeader" style="text-align:left;"></th></tr></thead>
+          <tbody data-bind="foreach: infoTable">
+            <tr><td><span data-bind="html: $data"></span></td></tr>
+          </tbody>
+         </table>
+         <div data-bind="visible: sensorGauge(), attr: { id: 'c' + crateno() + 'gauge' }, " style="position: absolute; right: 50px; top: 0px"></div>
+         <div data-bind="visible: sensorTable().length > 0" style="position: absolute; right: 0px; top: 0px">
+         <table>
+          <thead>
+            <tr><th colspan="4">SENSORS</th></tr>
+            <tr><th style="text-align: left;">Name</th><th style="text-align: right;">Value</th><th></th><th style="padding-left: 10px">readout time</th>
+          </thead>
+          <tbody data-bind="foreach: sensorTable">
+            <tr><td data-bind="text: name, click: $root.sensorClicked" class='sensor'></td><td data-bind="text: currentValue" style="text-align: right; padding-left: 10px"></td>
+                        <td data-bind="text: unit"></td><td data-bind="text: when" style="padding-left: 10px"></td>
+            </tr>
+           </tbody>
+          </table>
+          </div>
+       </div>
+      </div>
+     </div>
+   </div>
+ <!-- /ko -->
+ <div id='eventLog'>
+   <table class='myTable'>
+     <thead>
+       <tr><th colspan="6"><b>EVENTS</b> since <span data-bind="text: eventsSinceStr"></span></th><th><button id='getOldEvents'>get old events</button></th></tr>
+       <tr><th>when</th><th>crate</th><th>fru</th><th>card</th><th>sensor</th><th style="text-align:right">offset</th></tr>
+     </thead>
+     <tbody data-bind="foreach: events">
+      <tr>
+       <td data-bind="text: timeStr(when.secs * 1000) "></td>
+       <td data-bind="text: crate" style="text-align:right"></td>
+       <td data-bind="text: fru" style="text-align:right"></td>
+       <td data-bind="text: card"></td>
+       <td data-bind="text: sensor"></td>
+       <td data-bind="text: offset" style="text-align:right"></td></tr>
+     </tbody>
+    </table>
+ </div>
+ <div id='errorsDiv'>
+   <table data-bind="visible: errors().length > 0">
+     <thead><tr><th colspan="3">ERROR LOG</th></tr></thead>
+     <tbody data-bind="foreach: errors">
+      <tr><td data-bind="text: when"></td><td data-bind="text: cmd"></td><td data-bind="text: message"></td></tr>
+     </tbody>
+    </table>
+ </div>
+</div>
+</body></html>
